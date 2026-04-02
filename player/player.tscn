@@ -208,11 +208,11 @@ hframes = 8
 vframes = 8
 
 [node name="SwordInHand" type="Sprite2D" parent="Sprite2D"]
-visible = false
-position = Vector2(11, -2)
+visible = true
+position = Vector2(14, -4)
 rotation = 0.28
 texture = ExtResource("10")
-scale = Vector2(0.62, 0.62)
+scale = Vector2(1.0, 1.0)
 z_index = 2
 
 [node name="Gun" type="Marker2D" parent="Sprite2D"]
@@ -284,3 +284,8 @@ size = Vector2(220, 18)
 max_value = 10.0
 value = 0.0
 show_percentage = false
+
+[node name="FormSwitchHint" type="Label" parent="UI"]
+position = Vector2(24, 50)
+text = "Press Q to switch form"
+custom_colors/font_color = Color(0.7, 0.7, 0.7, 1)

@@ -29,15 +29,15 @@ const MELEE_RANGE = 40.0
 const MELEE_RADIUS = 24.0
 const MELEE_COOLDOWN = 0.2
 const WALL_JUMP_PUSH = 430.0
-const CHARGED_WAVE_COST = 10
 const MAX_ATTACK_CHARGE = 12
+const CHARGED_WAVE_COST = MAX_ATTACK_CHARGE
 
 ## The player listens for input actions appended with this suffix.[br]
 ## Used to separate controls for multiple players in splitscreen.
 @export var action_suffix := ""
-@export var dash_unlocked := false
-@export var claw_form_unlocked := false
-@export var sword_unlocked := false
+@export var dash_unlocked := true
+@export var claw_form_unlocked := true
+@export var sword_unlocked := true
 
 var gravity: int = ProjectSettings.get("physics/2d/default_gravity")
 @onready var platform_detector := $PlatformDetector as RayCast2D
@@ -66,10 +66,8 @@ func _physics_process(delta: float) -> void:
 	_dash_cooldown_left = maxf(0.0, _dash_cooldown_left - delta)
 	_melee_cooldown_left = maxf(0.0, _melee_cooldown_left - delta)
 	_attack_display_time_left = maxf(0.0, _attack_display_time_left - delta)
-	if sword_unlocked:
-		sword_in_hand.visible = _attack_display_time_left > 0.0
-	else:
-		sword_in_hand.visible = false
+	# Always show sword for prototype
+	sword_in_hand.visible = true
 
 	if Input.is_action_just_pressed("switch_form" + action_suffix):
 		switch_to_next_form()
