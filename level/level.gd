@@ -31,6 +31,8 @@ func _on_boss_trigger_body_entered(body: Node2D) -> void:
 	if _boss_started or not body is Player:
 		return
 	_boss_started = true
+	# Close the gate after the player is inside the arena checkpoint.
+	await get_tree().physics_frame
 	_boss_gate_collision.disabled = false
 	_boss_trigger.queue_free()
 

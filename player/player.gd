@@ -30,7 +30,7 @@ const MELEE_RADIUS = 24.0
 const MELEE_COOLDOWN = 0.2
 const WALL_JUMP_PUSH = 430.0
 const CHARGED_WAVE_COST = 10
-const MAX_ATTACK_CHARGE = 10
+const MAX_ATTACK_CHARGE = 12
 
 ## The player listens for input actions appended with this suffix.[br]
 ## Used to separate controls for multiple players in splitscreen.
