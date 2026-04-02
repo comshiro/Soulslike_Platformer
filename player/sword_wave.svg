@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="24" viewBox="0 0 96 24">
+  <defs>
+    <linearGradient id="blade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#9df9ff"/>
+      <stop offset="1" stop-color="#e8ffff"/>
+    </linearGradient>
+  </defs>
+  <g fill="none" fill-rule="evenodd">
+    <path d="M4 12 C18 5, 42 3, 92 12 C42 21, 18 19, 4 12 Z" fill="url(#blade)"/>
+    <path d="M8 12 C20 8, 44 7, 84 12 C44 17, 20 16, 8 12 Z" fill="#6ee8f6" opacity="0.5"/>
+  </g>
+</svg>

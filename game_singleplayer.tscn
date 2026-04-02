@@ -1,0 +1,33 @@
+[gd_scene format=3 uid="uid://bf3wnwihk7ymg"]
+
+[ext_resource type="Script" uid="uid://bu5roubif6wmg" path="res://game.gd" id="2"]
+[ext_resource type="PackedScene" uid="uid://ctgumjaytuoch" path="res://level/level.tscn" id="3"]
+[ext_resource type="PackedScene" uid="uid://vh7pmputa7r3" path="res://player/player.tscn" id="4"]
+[ext_resource type="PackedScene" uid="uid://c7ai4bigaryci" path="res://gui/pause_menu_singleplayer.tscn" id="4_x6l06"]
+[ext_resource type="PackedScene" path="res://level/dash_shard.tscn" id="5"]
+[ext_resource type="PackedScene" path="res://level/sword_pickup.tscn" id="6"]
+
+[node name="Game" type="Node" unique_id=1229093921]
+process_mode = 3
+script = ExtResource("2")
+
+[node name="Level" parent="." unique_id=292492372 instance=ExtResource("3")]
+position = Vector2(3, 0)
+
+[node name="Player" parent="Level" unique_id=450783657 instance=ExtResource("4")]
+position = Vector2(90, 546)
+
+[node name="SwordPickup" parent="Level" unique_id=2139386837 instance=ExtResource("6")]
+position = Vector2(300, 548)
+
+[node name="DashShard" parent="Level" unique_id=208258630 instance=ExtResource("5")]
+position = Vector2(210, 560)
+
+[node name="InterfaceLayer" type="CanvasLayer" parent="." unique_id=1730641722]
+layer = 100
+
+[node name="PauseMenu" parent="InterfaceLayer" unique_id=1393834027 instance=ExtResource("4_x6l06")]
+offset_left = 9.0
+offset_right = 9.0
+
+[connection signal="coin_collected" from="Level/Player" to="InterfaceLayer/PauseMenu" method="_on_coin_collected"]
