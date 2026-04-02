@@ -24,6 +24,7 @@
 [ext_resource type="Texture2D" uid="uid://y1clxckej6qp" path="res://level/stringstar_bg_2.png" id="25"]
 [ext_resource type="PackedScene" path="res://boss/forest_boss.tscn" id="26"]
 [ext_resource type="Script" uid="uid://blye67ymnhrna" path="res://level/level.gd" id="27"]
+[ext_resource type="AudioStream" path="res://enemy/hit.wav" id="28"]
 
 [sub_resource type="Animation" id="1"]
 resource_name = "move"
@@ -1724,6 +1725,11 @@ texture = ExtResource("6")
 shape = SubResource("RectangleShape2D_boss_gate")
 disabled = true
 
+[node name="BossGateSfx" type="AudioStreamPlayer2D" parent="RightExpansion" unique_id=1746249954]
+position = Vector2(1580, 512)
+stream = ExtResource("28")
+volume_db = -8.0
+
 [node name="StringstarDecor" type="Node2D" parent="RightExpansion" unique_id=1648136987]
 
 [node name="BgStripA" type="Sprite2D" parent="RightExpansion/StringstarDecor" unique_id=2078353007]
@@ -1840,3 +1846,19 @@ z_index = 1
 material = ExtResource("18")
 position = Vector2(2360, 585)
 texture = ExtResource("15")
+
+[node name="ArenaUi" type="CanvasLayer" parent="." unique_id=2061696757]
+
+[node name="BossBanner" type="Label" parent="ArenaUi" unique_id=607677931]
+visible = false
+offset_left = 420.0
+offset_top = 72.0
+offset_right = 860.0
+offset_bottom = 132.0
+pivot_offset = Vector2(220, 30)
+theme_override_colors/font_color = Color(1, 0.92, 0.72, 1)
+theme_override_colors/font_outline_color = Color(0.08, 0.08, 0.08, 1)
+theme_override_constants/outline_size = 8
+text = "BOSS ARENA"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 36
