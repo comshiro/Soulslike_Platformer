@@ -8,6 +8,9 @@ signal health_changed(current: int, maximum: int)
 @export var max_health := 13
 @export var walk_speed := 82.0
 @export var dash_speed := 300.0
+@export var dash_duration := 0.26
+@export var dash_windup_time := 0.24
+@export var dash_recover_time := 0.28
 @export var dash_cooldown := 2.0
 @export var preferred_distance := 170.0
 @export var backstep_distance := 100.0
@@ -25,7 +28,9 @@ enum MoveState {
 	APPROACH,
 	STRAFE,
 	BACKSTEP,
+	DASH_WINDUP,
 	DASH,
+	DASH_RECOVER,
 }
 
 var _health := 0
@@ -39,6 +44,7 @@ var _state_time_left := 0.0
 var _dash_time_left := 0.0
 var _pattern_step := 0
 var _did_backstep_hop := false
+var _dash_direction := 1.0
 
 @onready var gravity: int = ProjectSettings.get("physics/2d/default_gravity")
 @onready var sprite := $Sprite2D as Sprite2D
@@ -71,7 +77,12 @@ func _physics_process(delta: float) -> void:
 		var vertical_delta := absf(player.global_position.y - global_position.y)
 		var player_is_above := player.global_position.y < global_position.y - platform_chase_jump_threshold
 		if _state_time_left == 0.0:
-			_choose_next_state(distance)
+			if _state == MoveState.DASH_WINDUP:
+				_set_state(MoveState.DASH, dash_duration)
+			elif _state == MoveState.DASH_RECOVER:
+				_set_state(MoveState.APPROACH, 0.35)
+			else:
+				_choose_next_state(distance, direction)
 
 		if is_on_floor() and _platform_jump_cooldown_left == 0.0 and player_is_above:
 			velocity.y = platform_jump_velocity
@@ -80,10 +91,11 @@ func _physics_process(delta: float) -> void:
 
 		_match_state_movement(direction, distance, delta)
 
-		if _contact_hit_cooldown_left == 0.0 and distance <= contact_hit_range and vertical_delta <= contact_hit_vertical_tolerance:
+		var hit_range := contact_hit_range + (14.0 if _state == MoveState.DASH else 0.0)
+		if _contact_hit_cooldown_left == 0.0 and distance <= hit_range and vertical_delta <= contact_hit_vertical_tolerance:
 			if player.has_method("boss_hit"):
 				player.call("boss_hit", global_position.x)
-			sprite.modulate = Color(1.0, 0.82, 0.82, 1.0)
+			sprite.modulate = Color(1.0, 0.78, 0.78, 1.0)
 			var hit_fx := create_tween()
 			hit_fx.tween_property(sprite, "modulate", Color(1, 1, 1, 1), 0.12)
 			_contact_hit_cooldown_left = contact_hit_cooldown
@@ -105,11 +117,12 @@ func set_active(active: bool) -> void:
 		velocity = Vector2.ZERO
 
 
-func _choose_next_state(distance: float) -> void:
+func _choose_next_state(distance: float, direction: float) -> void:
 	_pattern_step += 1
 
 	if _dash_cooldown_left == 0.0 and distance <= dash_trigger_distance and _pattern_step % 3 == 0:
-		_set_state(MoveState.DASH, 0.26)
+		_dash_direction = direction
+		_set_state(MoveState.DASH_WINDUP, dash_windup_time)
 		return
 
 	if distance < backstep_distance:
@@ -126,8 +139,13 @@ func _choose_next_state(distance: float) -> void:
 func _set_state(new_state: MoveState, duration: float) -> void:
 	_state = new_state
 	_state_time_left = duration
+	if new_state == MoveState.DASH_WINDUP:
+		sprite.modulate = Color(1.0, 0.7, 0.7, 1.0)
+	elif sprite.modulate != Color(1, 1, 1, 1):
+		sprite.modulate = Color(1, 1, 1, 1)
+
 	if new_state == MoveState.DASH:
-		_dash_time_left = duration
+		_dash_time_left = dash_duration
 		_dash_cooldown_left = dash_cooldown
 	if new_state == MoveState.BACKSTEP:
 		_did_backstep_hop = false
@@ -154,11 +172,17 @@ func _match_state_movement(direction: float, distance: float, delta: float) -> v
 				velocity.y = -355.0
 				_did_backstep_hop = true
 
+		MoveState.DASH_WINDUP:
+			velocity.x = move_toward(velocity.x, 0.0, 920.0 * delta)
+
 		MoveState.DASH:
 			_dash_time_left = maxf(0.0, _dash_time_left - delta)
-			velocity.x = direction * dash_speed
+			velocity.x = _dash_direction * dash_speed
 			if _dash_time_left == 0.0:
-				_set_state(MoveState.APPROACH, 0.35)
+				_set_state(MoveState.DASH_RECOVER, dash_recover_time)
+
+		MoveState.DASH_RECOVER:
+			velocity.x = move_toward(velocity.x, 0.0, 840.0 * delta)
 
 
 func take_damage(amount: int = 1) -> void:
