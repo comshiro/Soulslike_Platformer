@@ -6,6 +6,7 @@ signal dash_unlocked_changed(unlocked: bool)
 signal form_changed(form: int)
 signal sword_unlocked_changed(unlocked: bool)
 signal attack_charge_changed(charge: int)
+signal hp_changed(current: int, maximum: int)
 
 
 enum Form {
@@ -37,7 +38,8 @@ const CHARGED_WAVE_COST = MAX_ATTACK_CHARGE
 @export var action_suffix := ""
 @export var dash_unlocked := true
 @export var claw_form_unlocked := true
-@export var sword_unlocked := true
+@export var sword_unlocked := false
+@export var max_hp := 5
 
 var gravity: int = ProjectSettings.get("physics/2d/default_gravity")
 @onready var platform_detector := $PlatformDetector as RayCast2D
@@ -48,6 +50,8 @@ var gravity: int = ProjectSettings.get("physics/2d/default_gravity")
 @onready var gun = sprite.get_node(^"Gun") as Gun
 @onready var sword_in_hand := sprite.get_node(^"SwordInHand") as Sprite2D
 @onready var charge_bar := $UI/ChargeBar as ProgressBar
+@onready var hp_bar := $UI/HpBar as ProgressBar
+@onready var hp_label := $UI/HpLabel as Label
 @onready var camera := $Camera as Camera2D
 var _double_jump_charged := false
 var _dash_direction := 1.0
@@ -60,14 +64,17 @@ var _melee_cooldown_left := 0.0
 var _current_form := Form.GROUND
 var _attack_display_time_left := 0.0
 var _attack_charge := 0
+var _boss_hit_invuln_left := 0.0
+var _hp := 0
+var _spawn_position := Vector2.ZERO
 
 
 func _physics_process(delta: float) -> void:
 	_dash_cooldown_left = maxf(0.0, _dash_cooldown_left - delta)
 	_melee_cooldown_left = maxf(0.0, _melee_cooldown_left - delta)
 	_attack_display_time_left = maxf(0.0, _attack_display_time_left - delta)
-	# Always show sword for prototype
-	sword_in_hand.visible = true
+	_boss_hit_invuln_left = maxf(0.0, _boss_hit_invuln_left - delta)
+	sword_in_hand.visible = sword_unlocked
 
 	if Input.is_action_just_pressed("switch_form" + action_suffix):
 		switch_to_next_form()
@@ -139,10 +146,16 @@ func _ready() -> void:
 	if dash_unlocked:
 		_current_form = Form.WIND
 	update_form_visual()
-	sword_in_hand.visible = false
+	sword_in_hand.visible = sword_unlocked
+	_spawn_position = global_position
+	_hp = max_hp
+	hp_bar.max_value = max_hp
+	hp_bar.value = _hp
+	hp_changed.emit(_hp, max_hp)
 	charge_bar.max_value = MAX_ATTACK_CHARGE
 	charge_bar.value = _attack_charge
 	attack_charge_changed.emit(_attack_charge)
+	hp_changed.connect(_on_hp_changed)
 
 
 func _on_coin_collected() -> void:
@@ -152,6 +165,12 @@ func _on_coin_collected() -> void:
 
 func _on_attack_charge_changed(charge: int) -> void:
 	charge_bar.value = charge
+
+
+func _on_hp_changed(current: int, maximum: int) -> void:
+	hp_bar.max_value = maximum
+	hp_bar.value = current
+	hp_label.text = "HP: %d/%d" % [current, maximum]
 
 
 func perform_melee_attack() -> bool:
@@ -178,6 +197,50 @@ func perform_melee_attack() -> bool:
 			collider.call("take_damage", 1)
 
 	return true
+
+
+func boss_hit(hit_from_x: float) -> void:
+	if _boss_hit_invuln_left > 0.0:
+		return
+
+	_boss_hit_invuln_left = 0.65
+	_is_dashing = false
+	_is_rolling = false
+
+	var push_dir := signf(global_position.x - hit_from_x)
+	if is_zero_approx(push_dir):
+		push_dir = -signf(sprite.scale.x)
+	if is_zero_approx(push_dir):
+		push_dir = 1.0
+
+	velocity.x = push_dir * 430.0
+	velocity.y = -230.0
+	_hp = max(0, _hp - 1)
+	hp_changed.emit(_hp, max_hp)
+	if _hp <= 0:
+		_respawn_after_death()
+
+	sprite.modulate = Color(1.0, 0.55, 0.55, 1.0)
+	var hurt_tween := create_tween()
+	hurt_tween.tween_property(sprite, "modulate", Color(1, 1, 1, 1), 0.32)
+
+	if camera:
+		var rest_offset := camera.offset
+		var shake := create_tween()
+		shake.tween_property(camera, "offset", rest_offset + Vector2(8, -3), 0.03)
+		shake.tween_property(camera, "offset", rest_offset + Vector2(-7, 3), 0.04)
+		shake.tween_property(camera, "offset", rest_offset, 0.06)
+
+
+func _respawn_after_death() -> void:
+	_hp = max_hp
+	hp_changed.emit(_hp, max_hp)
+	var checkpoint := get_parent().get_node_or_null("RightExpansion/ArenaCheckpoint") as Marker2D
+	if checkpoint:
+		global_position = checkpoint.global_position
+	else:
+		global_position = _spawn_position
+	velocity = Vector2.ZERO
 
 
 func start_dash() -> void:

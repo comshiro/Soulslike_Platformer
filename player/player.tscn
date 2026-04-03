@@ -287,5 +287,22 @@ show_percentage = false
 
 [node name="FormSwitchHint" type="Label" parent="UI"]
 position = Vector2(24, 50)
-text = "Press Q to switch form"
+text = "Press E to change form"
 custom_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+
+[node name="ChargedAttackHint" type="Label" parent="UI"]
+position = Vector2(24, 72)
+text = "Press Q for charged attack"
+custom_colors/font_color = Color(0.75, 0.85, 0.75, 1)
+
+[node name="HpLabel" type="Label" parent="UI"]
+position = Vector2(24, 98)
+text = "HP: 5/5"
+custom_colors/font_color = Color(0.95, 0.8, 0.8, 1)
+
+[node name="HpBar" type="ProgressBar" parent="UI"]
+position = Vector2(24, 120)
+size = Vector2(220, 16)
+max_value = 5.0
+value = 5.0
+show_percentage = false

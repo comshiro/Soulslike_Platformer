@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://dhcja2jfqd58"]
+
+[ext_resource type="Script" path="res://level/platforms/disappearing_platform.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://bxsmiv7k3fngt" path="res://level/platforms/moving_platform.webp" id="2"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
+size = Vector2(236, 40)
+
+[sub_resource type="VisualShader" id="VisualShader_1"]
+
+[node name="DisappearingPlatform" type="StaticBody2D"]
+collision_layer = 16
+collision_mask = 0
+script = ExtResource("1")
+visible_duration = 2.0
+hidden_duration = 1.5
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(1.2, 1)
+texture = ExtResource("2")
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="."]
+polygon = PackedVector2Array(-118, -20, 118, -20, 118, 20, -118, 20)
+one_way_collision = true
+one_way_collision_margin = 6.0

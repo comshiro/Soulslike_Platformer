@@ -1,23 +1,7 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene format=3 uid="uid://7bsvl0mln5y"]
 
-[ext_resource type="Script" path="res://boss/forest_boss.gd" id="1"]
-[ext_resource type="Texture2D" uid="uid://bjjywmvba0sve" path="res://enemy/enemy.webp" id="2"]
-
-[sub_resource type="Animation" id="1"]
-length = 0.4
-loop_mode = 1
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("Sprite2D:frame")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.1, 0.2, 0.3),
-"transitions": PackedFloat32Array(1, 1, 1, 1),
-"update": 1,
-"values": [0, 1, 2, 3]
-}
+[ext_resource type="Script" uid="uid://bmd1swv125dcd" path="res://boss/forest_boss.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://51hheabwj6tt" path="res://boss/TheForestSpirit-Walk.png" id="2"]
 
 [sub_resource type="Animation" id="2"]
 resource_name = "destroy"
@@ -49,32 +33,45 @@ tracks/1/keys = {
 }]
 }
 
+[sub_resource type="Animation" id="1"]
+length = 0.7
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 2, 3, 4, 5, 6]
+}
+
 [sub_resource type="AnimationLibrary" id="3"]
 _data = {
-"destroy": SubResource("2"),
-"walk": SubResource("1")
+&"destroy": SubResource("2"),
+&"walk": SubResource("1")
 }
 
 [sub_resource type="CapsuleShape2D" id="4"]
 radius = 26.0
 height = 72.0
 
-[node name="ForestBoss" type="CharacterBody2D"]
+[node name="ForestBoss" type="CharacterBody2D" unique_id=259562697]
 collision_layer = 2
 collision_mask = 24
 script = ExtResource("1")
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
-scale = Vector2(1.15, 1.15)
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1241865397]
+scale = Vector2(2.2, 2.2)
 texture = ExtResource("2")
-hframes = 8
-vframes = 2
+hframes = 7
 
-[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
-libraries = {
-"": SubResource("3")
-}
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1332214110]
+libraries/ = SubResource("3")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, -12)
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2127104048]
+position = Vector2(-45, -3)
 shape = SubResource("4")

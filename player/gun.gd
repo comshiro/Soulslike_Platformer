@@ -16,7 +16,7 @@ func shoot(direction: float = 1.0, charged := false) -> bool:
 		return false
 	var bullet := BULLET_SCENE.instantiate() as SwordWave
 	bullet.charged = charged
-	bullet.damage = 3 if charged else 1
+	bullet.damage = 4 if charged else 1
 	bullet.global_position = global_position
 	bullet.linear_velocity = Vector2(direction * BULLET_VELOCITY, 0.0)
 	if charged:
