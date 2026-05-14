@@ -23,6 +23,10 @@ signal health_changed(current: int, maximum: int)
 @export var platform_jump_velocity := -540.0
 @export var platform_jump_horizontal_boost := 190.0
 @export var platform_jump_cooldown := 1.1
+@export var spray_pattern_cooldown := 3.0
+@export var spray_count := 3
+@export var spray_speed := 180.0
+@export var spray_jump_height := -450.0
 
 enum MoveState {
 	APPROACH,
@@ -31,6 +35,7 @@ enum MoveState {
 	DASH_WINDUP,
 	DASH,
 	DASH_RECOVER,
+	PATTERN_SPRAY,
 }
 
 var _health := 0
@@ -46,6 +51,8 @@ var _pattern_step := 0
 var _did_backstep_hop := false
 var _dash_direction := 1.0
 var _sprite_base_scale := Vector2.ONE
+var _spray_cooldown_left := 0.0
+var _spray_tick := 0
 
 @onready var gravity: int = ProjectSettings.get("physics/2d/default_gravity")
 @onready var sprite := $Sprite2D as Sprite2D
@@ -66,6 +73,7 @@ func _physics_process(delta: float) -> void:
 	_dash_cooldown_left = maxf(0.0, _dash_cooldown_left - delta)
 	_contact_hit_cooldown_left = maxf(0.0, _contact_hit_cooldown_left - delta)
 	_platform_jump_cooldown_left = maxf(0.0, _platform_jump_cooldown_left - delta)
+	_spray_cooldown_left = maxf(0.0, _spray_cooldown_left - delta)
 	_state_time_left = maxf(0.0, _state_time_left - delta)
 	velocity.y += gravity * delta
 
@@ -121,6 +129,12 @@ func set_active(active: bool) -> void:
 
 func _choose_next_state(distance: float, direction: float) -> void:
 	_pattern_step += 1
+
+	if _spray_cooldown_left == 0.0 and _pattern_step % 5 == 0:
+		_spray_cooldown_left = spray_pattern_cooldown
+		_spray_tick = 0
+		_set_state(MoveState.PATTERN_SPRAY, 0.6)
+		return
 
 	if _dash_cooldown_left == 0.0 and distance <= dash_trigger_distance and _pattern_step % 3 == 0:
 		_dash_direction = direction
@@ -186,6 +200,12 @@ func _match_state_movement(direction: float, distance: float, delta: float) -> v
 		MoveState.DASH_RECOVER:
 			velocity.x = move_toward(velocity.x, 0.0, 840.0 * delta)
 
+		MoveState.PATTERN_SPRAY:
+			velocity.x = move_toward(velocity.x, 0.0, 920.0 * delta)
+			if is_on_floor():
+				velocity.y = spray_jump_height
+			_spray_projectiles()
+
 
 func take_damage(amount: int = 1) -> void:
 	if _is_dead:
@@ -206,3 +226,40 @@ func die() -> void:
 	defeated.emit()
 	if animation_player.current_animation != "destroy":
 		animation_player.play("destroy")
+
+
+func _spray_projectiles() -> void:
+	_spray_tick += 1
+	if _spray_tick > spray_count:
+		return
+	
+	var angle_spread := PI / 2.0
+	var start_angle := -angle_spread / 2.0
+	var angle_step := angle_spread / (spray_count - 1) if spray_count > 1 else 0.0
+	var angle := start_angle + (angle_step * (_spray_tick - 1))
+	
+	var player := get_parent().get_parent().get_node_or_null("Player") as Player
+	if not player:
+		return
+	
+	var projectile := Node2D.new()
+	projectile.global_position = global_position + Vector2(0, -40)
+	
+	var proj_sprite := Sprite2D.new()
+	proj_sprite.texture = preload("res://level/tiles.webp")
+	proj_sprite.hframes = 20
+	proj_sprite.vframes = 20
+	proj_sprite.frame = 1
+	proj_sprite.scale = Vector2(1.5, 1.5)
+	projectile.add_child(proj_sprite)
+	
+	var direction := Vector2(cos(angle), sin(angle))
+	
+	var script = load("res://boss/projectile.gd") as GDScript
+	projectile.set_script(script)
+	projectile.speed = spray_speed
+	projectile.lifetime = 4.0
+	projectile.damage = 1
+	projectile.set_direction(direction)
+	
+	get_parent().add_child(projectile)
