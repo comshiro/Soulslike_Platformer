@@ -53,6 +53,7 @@ var _dash_direction := 1.0
 var _sprite_base_scale := Vector2.ONE
 var _spray_cooldown_left := 0.0
 var _spray_tick := 0
+var _last_facing_direction := 1.0
 
 @onready var gravity: int = ProjectSettings.get("physics/2d/default_gravity")
 @onready var sprite := $Sprite2D as Sprite2D
@@ -77,11 +78,13 @@ func _physics_process(delta: float) -> void:
 	_state_time_left = maxf(0.0, _state_time_left - delta)
 	velocity.y += gravity * delta
 
-	var player := get_parent().get_parent().get_node_or_null("Player") as Player
+	var player := get_tree().root.find_child("Player", true, false) as Player
 	if player:
 		var direction := signf(player.global_position.x - global_position.x)
 		if is_zero_approx(direction):
 			direction = 1.0
+		
+		_last_facing_direction = direction
 
 		var distance := absf(player.global_position.x - global_position.x)
 		var vertical_delta := absf(player.global_position.y - global_position.y)
@@ -112,9 +115,9 @@ func _physics_process(delta: float) -> void:
 
 	move_and_slide()
 
-	if velocity.x > 0.0:
+	if _last_facing_direction > 0.0:
 		sprite.scale.x = absf(_sprite_base_scale.x)
-	elif velocity.x < 0.0:
+	elif _last_facing_direction < 0.0:
 		sprite.scale.x = -absf(_sprite_base_scale.x)
 
 	if animation_player.current_animation != "walk":
