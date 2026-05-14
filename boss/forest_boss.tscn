@@ -73,5 +73,5 @@ hframes = 7
 libraries/ = SubResource("3")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2127104048]
-position = Vector2(-45, -3)
+position = Vector2(0, 0)
 shape = SubResource("4")
