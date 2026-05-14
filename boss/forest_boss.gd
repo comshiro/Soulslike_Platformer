@@ -45,6 +45,7 @@ var _dash_time_left := 0.0
 var _pattern_step := 0
 var _did_backstep_hop := false
 var _dash_direction := 1.0
+var _sprite_base_scale := Vector2.ONE
 
 @onready var gravity: int = ProjectSettings.get("physics/2d/default_gravity")
 @onready var sprite := $Sprite2D as Sprite2D
@@ -53,6 +54,7 @@ var _dash_direction := 1.0
 
 func _ready() -> void:
 	_health = max_health
+	_sprite_base_scale = sprite.scale
 	health_changed.emit(_health, max_health)
 	_set_state(MoveState.APPROACH, 0.45)
 
@@ -103,9 +105,9 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 	if velocity.x > 0.0:
-		sprite.scale.x = 1.15
+		sprite.scale.x = absf(_sprite_base_scale.x)
 	elif velocity.x < 0.0:
-		sprite.scale.x = -1.15
+		sprite.scale.x = -absf(_sprite_base_scale.x)
 
 	if animation_player.current_animation != "walk":
 		animation_player.play("walk")
