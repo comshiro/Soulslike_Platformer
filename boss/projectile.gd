@@ -11,7 +11,17 @@ var has_hit := false
 
 
 func _ready() -> void:
-	pass
+	_setup_visuals()
+
+
+func _setup_visuals() -> void:
+	# Create a simple visual: colored square
+	var rect = ColorRect.new()
+	rect.color = Color.YELLOW
+	rect.size = Vector2(12, 12)
+	rect.position = Vector2(-6, -6)
+	rect.self_modulate = Color(1.0, 0.85, 0.0, 1.0)
+	add_child(rect)
 
 
 func _process(delta: float) -> void:
@@ -27,9 +37,6 @@ func _process(delta: float) -> void:
 
 func set_direction(dir: Vector2) -> void:
 	velocity = dir.normalized()
-	var sprite = get_node_or_null("Sprite2D")
-	if sprite:
-		sprite.scale.x = sign(velocity.x) if sign(velocity.x) != 0.0 else 1.0
 
 
 func _check_collision() -> void:
@@ -43,5 +50,6 @@ func _check_collision() -> void:
 			player.call("take_damage", damage)
 		has_hit = true
 		queue_free()
+
 
 
