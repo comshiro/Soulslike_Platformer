@@ -24,9 +24,11 @@ signal health_changed(current: int, maximum: int)
 @export var platform_jump_horizontal_boost := 190.0
 @export var platform_jump_cooldown := 1.1
 @export var spray_pattern_cooldown := 3.0
-@export var spray_count := 3
-@export var spray_speed := 180.0
+@export var spray_count := 4
+@export var spray_speed := 245.0
 @export var spray_jump_height := -450.0
+@export var spray_fire_interval := 0.16
+@export var projectile_spawn_offset := Vector2(-46.0, -22.0)
 
 enum MoveState {
 	APPROACH,
@@ -53,7 +55,9 @@ var _dash_direction := 1.0
 var _sprite_base_scale := Vector2.ONE
 var _spray_cooldown_left := 0.0
 var _spray_tick := 0
+var _spray_fire_time_left := 0.0
 var _last_facing_direction := 1.0
+var _target_player: Player
 
 @onready var gravity: int = ProjectSettings.get("physics/2d/default_gravity")
 @onready var sprite := $Sprite2D as Sprite2D
@@ -78,7 +82,7 @@ func _physics_process(delta: float) -> void:
 	_state_time_left = maxf(0.0, _state_time_left - delta)
 	velocity.y += gravity * delta
 
-	var player := get_tree().root.find_child("Player", true, false) as Player
+	var player := _get_player()
 	if player:
 		var direction := signf(player.global_position.x - global_position.x)
 		if is_zero_approx(direction):
@@ -168,6 +172,9 @@ func _set_state(new_state: MoveState, duration: float) -> void:
 		_dash_cooldown_left = dash_cooldown
 	if new_state == MoveState.BACKSTEP:
 		_did_backstep_hop = false
+	if new_state == MoveState.PATTERN_SPRAY:
+		_spray_tick = 0
+		_spray_fire_time_left = 0.0
 
 
 func _match_state_movement(direction: float, distance: float, delta: float) -> void:
@@ -207,7 +214,7 @@ func _match_state_movement(direction: float, distance: float, delta: float) -> v
 			velocity.x = move_toward(velocity.x, 0.0, 920.0 * delta)
 			if is_on_floor():
 				velocity.y = spray_jump_height
-			_spray_projectiles()
+			_spray_projectiles(delta)
 
 
 func take_damage(amount: int = 1) -> void:
@@ -222,7 +229,7 @@ func take_damage(amount: int = 1) -> void:
 func die() -> void:
 	_is_dead = true
 	velocity = Vector2.ZERO
-	sprite.texture = preload("res://boss/TheForestSpirit-Death.png")
+	sprite.texture = preload("res://boss/TheForestSpirit-Death-cropped.png")
 	sprite.hframes = 13
 	sprite.vframes = 1
 	sprite.frame = 0
@@ -231,38 +238,41 @@ func die() -> void:
 		animation_player.play("destroy")
 
 
-func _spray_projectiles() -> void:
+func _spray_projectiles(delta: float) -> void:
+	_spray_fire_time_left -= delta
+	if _spray_fire_time_left > 0.0:
+		return
+
 	_spray_tick += 1
 	if _spray_tick > spray_count:
 		return
-	
-	var angle_spread := PI / 2.0
-	var start_angle := -angle_spread / 2.0
-	var angle_step := angle_spread / (spray_count - 1) if spray_count > 1 else 0.0
-	var angle := start_angle + (angle_step * (_spray_tick - 1))
-	
-	var player := get_parent().get_parent().get_node_or_null("Player") as Player
+
+	_spray_fire_time_left = spray_fire_interval
+	var player := _get_player()
 	if not player:
 		return
-	
+
 	var projectile := Node2D.new()
-	projectile.global_position = global_position + Vector2(0, -40)
-	
-	var proj_sprite := Sprite2D.new()
-	proj_sprite.texture = preload("res://level/tiles.webp")
-	proj_sprite.hframes = 20
-	proj_sprite.vframes = 20
-	proj_sprite.frame = 1
-	proj_sprite.scale = Vector2(1.5, 1.5)
-	projectile.add_child(proj_sprite)
-	
-	var direction := Vector2(cos(angle), sin(angle))
-	
-	var script = load("res://boss/projectile.gd") as GDScript
+	projectile.global_position = global_position + projectile_spawn_offset + Vector2(_last_facing_direction * 18.0, 0.0)
+
+	var direction := projectile.global_position.direction_to(player.global_position + Vector2(0.0, -20.0))
+	var fan_offset := (_spray_tick - (spray_count + 1) * 0.5) * 0.18
+	direction = direction.rotated(fan_offset)
+
+	var script := load("res://boss/projectile.gd") as GDScript
 	projectile.set_script(script)
 	projectile.speed = spray_speed
 	projectile.lifetime = 4.0
 	projectile.damage = 1
+	projectile.hit_range = 22.0
 	projectile.set_direction(direction)
-	
+
 	get_parent().add_child(projectile)
+
+
+func _get_player() -> Player:
+	if is_instance_valid(_target_player):
+		return _target_player
+
+	_target_player = get_tree().root.find_child("Player", true, false) as Player
+	return _target_player
