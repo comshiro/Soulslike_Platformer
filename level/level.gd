@@ -2,8 +2,8 @@ extends Node2D
 
 
 const LIMIT_LEFT = -100
-const LIMIT_TOP = -1300
-const LIMIT_RIGHT = 8400
+const LIMIT_TOP = -1600
+const LIMIT_RIGHT = 12800
 const LIMIT_BOTTOM = 1900
 const ARENA_RESPAWN_FALL_MARGIN = 240.0
 const ARENA_LOCK_LEFT_X = 1590.0
@@ -13,6 +13,8 @@ const BOSS_LOCK_RIGHT_X = 2515.0
 
 @onready var _boss_trigger := $RightExpansion/BossTrigger as Area2D
 @onready var _boss_gate_collision := $RightExpansion/BossGate/CollisionShape2D as CollisionShape2D
+@onready var _arena_left_wall_collision := $RightExpansion/ArenaLeftWall/CollisionPolygon2D as CollisionPolygon2D
+@onready var _arena_right_wall_collision := $RightExpansion/ArenaRightWall/CollisionPolygon2D as CollisionPolygon2D
 @onready var _boss := $RightExpansion/ForestBoss as ForestBoss
 @onready var _tilemap := $TileMap as TileMap
 @onready var _arena_checkpoint := $RightExpansion/ArenaCheckpoint as Marker2D
@@ -61,6 +63,8 @@ func _on_boss_trigger_body_entered(body: Node2D) -> void:
 
 func _on_boss_defeated() -> void:
 	_boss_gate_collision.disabled = true
+	_arena_left_wall_collision.disabled = true
+	_arena_right_wall_collision.disabled = true
 	_boss_hp_bar.visible = false
 	_boss_hp_label.visible = false
 
