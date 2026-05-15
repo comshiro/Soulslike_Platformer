@@ -172,18 +172,18 @@ func _update_camera_limits_from_tilemap() -> void:
 		return
 
 	var used_cells := _tilemap.get_used_cells(0)
-	if used_cells.empty():
+	if used_cells.size() == 0:
 		return
 
-	var min_cell := used_cells[0]
-	var max_cell := used_cells[0]
+	var min_cell: Vector2i = used_cells[0]
+	var max_cell: Vector2i = used_cells[0]
 	for c in used_cells:
 		min_cell.x = min(min_cell.x, c.x)
 		min_cell.y = min(min_cell.y, c.y)
 		max_cell.x = max(max_cell.x, c.x)
 		max_cell.y = max(max_cell.y, c.y)
 
-	var cell_size := _tilemap.cell_size
+	var cell_size: Vector2 = _tilemap.cell_size
 	var world_min := _tilemap.map_to_world(min_cell)
 	var world_max := _tilemap.map_to_world(max_cell) + cell_size
 
