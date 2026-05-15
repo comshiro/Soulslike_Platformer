@@ -308,3 +308,13 @@ size = Vector2(220, 16)
 max_value = 5.0
 value = 5.0
 show_percentage = false
+
+[node name="UnlockToast" type="Label" parent="UI"]
+visible = false
+position = Vector2(24, 140)
+size = Vector2(320, 34)
+theme_override_colors/font_color = Color(0.8, 1, 0.92, 1)
+theme_override_colors/font_outline_color = Color(0.04, 0.08, 0.07, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 20
+text = "Ability unlocked"

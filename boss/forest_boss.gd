@@ -6,15 +6,15 @@ signal health_changed(current: int, maximum: int)
 
 
 @export var max_health := 13
-@export var walk_speed := 82.0
-@export var dash_speed := 300.0
-@export var dash_duration := 0.26
-@export var dash_windup_time := 0.24
-@export var dash_recover_time := 0.28
-@export var dash_cooldown := 2.0
-@export var preferred_distance := 170.0
-@export var backstep_distance := 100.0
-@export var dash_trigger_distance := 240.0
+@export var walk_speed := 108.0
+@export var dash_speed := 380.0
+@export var dash_duration := 0.24
+@export var dash_windup_time := 0.22
+@export var dash_recover_time := 0.24
+@export var dash_cooldown := 1.55
+@export var preferred_distance := 190.0
+@export var backstep_distance := 96.0
+@export var dash_trigger_distance := 330.0
 @export var contact_hit_range := 44.0
 @export var contact_hit_vertical_tolerance := 58.0
 @export var contact_hit_cooldown := 0.8
@@ -22,12 +22,12 @@ signal health_changed(current: int, maximum: int)
 @export var platform_chase_jump_threshold := 95.0
 @export var platform_jump_velocity := -540.0
 @export var platform_jump_horizontal_boost := 190.0
-@export var platform_jump_cooldown := 1.1
-@export var spray_pattern_cooldown := 3.0
-@export var spray_count := 4
-@export var spray_speed := 245.0
+@export var platform_jump_cooldown := 0.85
+@export var spray_pattern_cooldown := 2.55
+@export var spray_count := 5
+@export var spray_speed := 330.0
 @export var spray_jump_height := -450.0
-@export var spray_fire_interval := 0.16
+@export var spray_fire_interval := 0.13
 @export var projectile_spawn_offset := Vector2(-46.0, -22.0)
 
 enum MoveState {
@@ -137,26 +137,30 @@ func set_active(active: bool) -> void:
 func _choose_next_state(distance: float, direction: float) -> void:
 	_pattern_step += 1
 
-	if _spray_cooldown_left == 0.0 and _pattern_step % 5 == 0:
-		_spray_cooldown_left = spray_pattern_cooldown
-		_spray_tick = 0
-		_set_state(MoveState.PATTERN_SPRAY, 0.6)
+	if distance > dash_trigger_distance + 130.0:
+		_set_state(MoveState.APPROACH, 0.45)
 		return
 
-	if _dash_cooldown_left == 0.0 and distance <= dash_trigger_distance and _pattern_step % 3 == 0:
+	if distance < backstep_distance:
+		_set_state(MoveState.BACKSTEP, 0.36)
+		return
+
+	if _spray_cooldown_left == 0.0 and distance >= preferred_distance - 35.0 and _pattern_step % 4 == 0:
+		_spray_cooldown_left = spray_pattern_cooldown
+		_spray_tick = 0
+		_set_state(MoveState.PATTERN_SPRAY, 0.7)
+		return
+
+	if _dash_cooldown_left == 0.0 and distance <= dash_trigger_distance and distance >= backstep_distance and _pattern_step % 3 == 0:
 		_dash_direction = direction
 		_set_state(MoveState.DASH_WINDUP, dash_windup_time)
 		return
 
-	if distance < backstep_distance:
-		_set_state(MoveState.BACKSTEP, 0.42)
-		return
-
 	if distance > preferred_distance + 55.0:
-		_set_state(MoveState.APPROACH, 0.55)
+		_set_state(MoveState.APPROACH, 0.48)
 		return
 
-	_set_state(MoveState.STRAFE, 0.62)
+	_set_state(MoveState.STRAFE, 0.54)
 
 
 func _set_state(new_state: MoveState, duration: float) -> void:
@@ -222,6 +226,7 @@ func take_damage(amount: int = 1) -> void:
 		return
 	_health -= amount
 	health_changed.emit(maxi(_health, 0), max_health)
+	_play_damage_flash()
 	if _health <= 0:
 		die()
 
@@ -276,3 +281,9 @@ func _get_player() -> Player:
 
 	_target_player = get_tree().root.find_child("Player", true, false) as Player
 	return _target_player
+
+
+func _play_damage_flash() -> void:
+	sprite.modulate = Color(1.0, 0.96, 0.62, 1.0)
+	var flash := create_tween()
+	flash.tween_property(sprite, "modulate", Color(1, 1, 1, 1), 0.12)

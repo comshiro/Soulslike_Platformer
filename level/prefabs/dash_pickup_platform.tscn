@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://level/platforms/platform.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://level/dash_shard.tscn" id="2"]
+
+[node name="DashPickupPlatform" type="Node2D"]
+
+[node name="Platform" parent="." instance=ExtResource("1")]
+
+[node name="DashShard" parent="." instance=ExtResource("2")]
+position = Vector2(0, -88)

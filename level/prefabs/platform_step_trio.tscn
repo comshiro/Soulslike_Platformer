@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="PackedScene" path="res://level/platforms/platform.tscn" id="1"]
+
+[node name="PlatformStepTrio" type="Node2D"]
+
+[node name="PlatformA" parent="." instance=ExtResource("1")]
+
+[node name="PlatformB" parent="." instance=ExtResource("1")]
+position = Vector2(260, -120)
+
+[node name="PlatformC" parent="." instance=ExtResource("1")]
+position = Vector2(520, -250)

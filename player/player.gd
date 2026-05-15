@@ -32,6 +32,8 @@ const MELEE_COOLDOWN = 0.2
 const WALL_JUMP_PUSH = 430.0
 const MAX_ATTACK_CHARGE = 12
 const CHARGED_WAVE_COST = MAX_ATTACK_CHARGE
+const JUMP_BUFFER_TIME = 0.1
+const COYOTE_TIME = 0.08
 
 ## The player listens for input actions appended with this suffix.[br]
 ## Used to separate controls for multiple players in splitscreen.
@@ -52,6 +54,7 @@ var gravity: int = ProjectSettings.get("physics/2d/default_gravity")
 @onready var charge_bar := $UI/ChargeBar as ProgressBar
 @onready var hp_bar := $UI/HpBar as ProgressBar
 @onready var hp_label := $UI/HpLabel as Label
+@onready var unlock_toast := $UI/UnlockToast as Label
 @onready var camera := $Camera as Camera2D
 var _double_jump_charged := false
 var _dash_direction := 1.0
@@ -67,6 +70,9 @@ var _attack_charge := 0
 var _boss_hit_invuln_left := 0.0
 var _hp := 0
 var _spawn_position := Vector2.ZERO
+var _jump_buffer_time_left := 0.0
+var _coyote_time_left := 0.0
+var _unlock_toast_tween: Tween
 
 
 func _physics_process(delta: float) -> void:
@@ -74,6 +80,7 @@ func _physics_process(delta: float) -> void:
 	_melee_cooldown_left = maxf(0.0, _melee_cooldown_left - delta)
 	_attack_display_time_left = maxf(0.0, _attack_display_time_left - delta)
 	_boss_hit_invuln_left = maxf(0.0, _boss_hit_invuln_left - delta)
+	_jump_buffer_time_left = maxf(0.0, _jump_buffer_time_left - delta)
 	sword_in_hand.visible = sword_unlocked
 
 	if Input.is_action_just_pressed("switch_form" + action_suffix):
@@ -92,6 +99,9 @@ func _physics_process(delta: float) -> void:
 
 	if is_on_floor():
 		_double_jump_charged = true
+		_coyote_time_left = COYOTE_TIME
+	else:
+		_coyote_time_left = maxf(0.0, _coyote_time_left - delta)
 
 	if can_use_wind_form() and _dash_cooldown_left == 0.0 and Input.is_action_just_pressed("dash" + action_suffix):
 		if is_on_floor():
@@ -101,7 +111,9 @@ func _physics_process(delta: float) -> void:
 		return
 
 	if Input.is_action_just_pressed("jump" + action_suffix):
-		try_jump()
+		_jump_buffer_time_left = JUMP_BUFFER_TIME
+	if _jump_buffer_time_left > 0.0 and try_jump():
+		_jump_buffer_time_left = 0.0
 	elif Input.is_action_just_released("jump" + action_suffix) and velocity.y < 0.0:
 		# The player let go of jump early, reduce vertical momentum.
 		velocity.y *= 0.6
@@ -143,6 +155,9 @@ func _physics_process(delta: float) -> void:
 func _ready() -> void:
 	coin_collected.connect(_on_coin_collected)
 	attack_charge_changed.connect(_on_attack_charge_changed)
+	dash_unlocked_changed.connect(_on_dash_unlocked_changed)
+	sword_unlocked_changed.connect(_on_sword_unlocked_changed)
+	hp_changed.connect(_on_hp_changed)
 	if dash_unlocked:
 		_current_form = Form.WIND
 	update_form_visual()
@@ -155,7 +170,7 @@ func _ready() -> void:
 	charge_bar.max_value = MAX_ATTACK_CHARGE
 	charge_bar.value = _attack_charge
 	attack_charge_changed.emit(_attack_charge)
-	hp_changed.connect(_on_hp_changed)
+	unlock_toast.visible = false
 
 
 func _on_coin_collected() -> void:
@@ -223,6 +238,7 @@ func boss_hit(hit_from_x: float) -> void:
 	sprite.modulate = Color(1.0, 0.55, 0.55, 1.0)
 	var hurt_tween := create_tween()
 	hurt_tween.tween_property(sprite, "modulate", Color(1, 1, 1, 1), 0.32)
+	hurt_tween.tween_callback(update_form_visual)
 
 	if camera:
 		var rest_offset := camera.offset
@@ -354,6 +370,32 @@ func can_use_claw_form() -> bool:
 	return _current_form == Form.CLAW and claw_form_unlocked
 
 
+func _on_dash_unlocked_changed(unlocked: bool) -> void:
+	if unlocked:
+		_show_unlock_toast("Dash unlocked")
+
+
+func _on_sword_unlocked_changed(unlocked: bool) -> void:
+	if unlocked:
+		_show_unlock_toast("Sword unlocked")
+
+
+func _show_unlock_toast(message: String) -> void:
+	if _unlock_toast_tween != null and _unlock_toast_tween.is_valid():
+		_unlock_toast_tween.kill()
+
+	unlock_toast.text = message
+	unlock_toast.visible = true
+	unlock_toast.modulate = Color(1, 1, 1, 0)
+	unlock_toast.position.y = 148.0
+	_unlock_toast_tween = create_tween()
+	_unlock_toast_tween.tween_property(unlock_toast, "modulate:a", 1.0, 0.16).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_unlock_toast_tween.parallel().tween_property(unlock_toast, "position:y", 140.0, 0.2).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_unlock_toast_tween.tween_interval(1.35)
+	_unlock_toast_tween.tween_property(unlock_toast, "modulate:a", 0.0, 0.22).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	_unlock_toast_tween.tween_callback(unlock_toast.hide)
+
+
 func get_new_animation(is_shooting := false) -> String:
 	var animation_new: String
 	if is_on_floor():
@@ -371,9 +413,10 @@ func get_new_animation(is_shooting := false) -> String:
 	return animation_new
 
 
-func try_jump() -> void:
-	if is_on_floor():
+func try_jump() -> bool:
+	if is_on_floor() or _coyote_time_left > 0.0:
 		jump_sound.pitch_scale = 1.0
+		_coyote_time_left = 0.0
 	elif can_use_claw_form() and is_on_wall_only():
 		velocity.x = get_wall_jump_direction() * WALL_JUMP_PUSH
 		jump_sound.pitch_scale = 1.25
@@ -382,9 +425,10 @@ func try_jump() -> void:
 		velocity.x *= 1.45
 		jump_sound.pitch_scale = 1.5
 	else:
-		return
+		return false
 	velocity.y = JUMP_VELOCITY
 	jump_sound.play()
+	return true
 
 
 func get_wall_jump_direction() -> float:

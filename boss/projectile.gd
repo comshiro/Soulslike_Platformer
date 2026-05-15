@@ -1,10 +1,10 @@
 extends Node2D
 
-@export var speed := 250.0
-@export var lifetime := 3.0
+@export var speed := 330.0
+@export var lifetime := 3.2
 @export var damage := 1
-@export var hit_range := 16.0
-@export var spin_speed := 7.0
+@export var hit_range := 20.0
+@export var spin_speed := 9.0
 
 var velocity := Vector2.ZERO
 var time_alive := 0.0
@@ -28,10 +28,20 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	draw_circle(Vector2.ZERO, 12.0, Color(0.53, 1.0, 0.5, 0.28))
-	draw_circle(Vector2.ZERO, 8.0, Color(0.92, 1.0, 0.48, 0.9))
-	draw_circle(Vector2(4, -3), 3.0, Color(1.0, 1.0, 0.82, 1.0))
-	draw_arc(Vector2.ZERO, 14.0, 0.2, 2.8, 14, Color(0.2, 0.9, 0.45, 0.8), 2.0)
+	var points := PackedVector2Array([
+		Vector2(18, 0),
+		Vector2(6, 6),
+		Vector2(0, 18),
+		Vector2(-6, 6),
+		Vector2(-18, 0),
+		Vector2(-6, -6),
+		Vector2(0, -18),
+		Vector2(6, -6),
+	])
+	draw_colored_polygon(points, Color(0.42, 1.0, 0.72, 0.34))
+	draw_circle(Vector2.ZERO, 9.0, Color(0.92, 1.0, 0.58, 0.88))
+	draw_circle(Vector2(3, -3), 3.0, Color(1.0, 1.0, 0.88, 1.0))
+	draw_arc(Vector2.ZERO, 16.0, 0.2, 2.9, 16, Color(0.24, 0.92, 0.66, 0.86), 2.0)
 
 
 func set_direction(dir: Vector2) -> void:

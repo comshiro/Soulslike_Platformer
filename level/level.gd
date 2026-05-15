@@ -19,12 +19,14 @@ const BOSS_LOCK_RIGHT_X = 2515.0
 @onready var _tilemap := $TileMap as TileMap
 @onready var _arena_checkpoint := $RightExpansion/ArenaCheckpoint as Marker2D
 @onready var _boss_banner := $ArenaUi/BossBanner as Label
+@onready var _checkpoint_toast := $ArenaUi/CheckpointToast as Label
 @onready var _respawn_flash := $ArenaUi/RespawnFlash as ColorRect
 @onready var _boss_hp_bar := $ArenaUi/BossHpBar as ProgressBar
 @onready var _boss_hp_label := $ArenaUi/BossHpLabel as Label
 @onready var _boss_gate_sfx := $RightExpansion/BossGateSfx as AudioStreamPlayer2D
 
 var _boss_started := false
+var _checkpoint_toast_tween: Tween
 
 
 func _ready():
@@ -43,6 +45,7 @@ func _ready():
 	_boss_gate_collision.disabled = true
 	_boss_hp_bar.visible = false
 	_boss_hp_label.visible = false
+	_on_boss_health_changed(_boss.max_health, _boss.max_health)
 	_clear_tile_patch_around(Vector2(445, 197), 2, 1)
 
 
@@ -51,6 +54,7 @@ func _on_boss_trigger_body_entered(body: Node2D) -> void:
 		return
 	_boss_started = true
 	_play_boss_intro_feedback(body as Player)
+	_show_checkpoint_toast("Checkpoint reached")
 	_boss_hp_bar.visible = true
 	_boss_hp_label.visible = true
 	# Invisible lock-in wall: activate gate collider once player enters arena.
@@ -67,6 +71,7 @@ func _on_boss_defeated() -> void:
 	_arena_right_wall_collision.disabled = true
 	_boss_hp_bar.visible = false
 	_boss_hp_label.visible = false
+	_show_checkpoint_toast("Arena opened")
 
 
 func _on_boss_health_changed(current: int, maximum: int) -> void:
@@ -130,6 +135,22 @@ func _play_respawn_flash() -> void:
 	flash_tween.tween_property(_respawn_flash, "color:a", 0.26, 0.05).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	flash_tween.tween_property(_respawn_flash, "color:a", 0.0, 0.18).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	flash_tween.tween_callback(_respawn_flash.hide)
+
+
+func _show_checkpoint_toast(message: String) -> void:
+	if _checkpoint_toast_tween != null and _checkpoint_toast_tween.is_valid():
+		_checkpoint_toast_tween.kill()
+
+	_checkpoint_toast.text = message
+	_checkpoint_toast.visible = true
+	_checkpoint_toast.modulate = Color(1, 1, 1, 0)
+	_checkpoint_toast.position.y = 96.0
+	_checkpoint_toast_tween = create_tween()
+	_checkpoint_toast_tween.tween_property(_checkpoint_toast, "modulate:a", 1.0, 0.16).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_checkpoint_toast_tween.parallel().tween_property(_checkpoint_toast, "position:y", 88.0, 0.2).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_checkpoint_toast_tween.tween_interval(1.25)
+	_checkpoint_toast_tween.tween_property(_checkpoint_toast, "modulate:a", 0.0, 0.22).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	_checkpoint_toast_tween.tween_callback(_checkpoint_toast.hide)
 
 
 func _clear_tile_patch_around(world_pos: Vector2, half_width: int, half_height: int) -> void:
