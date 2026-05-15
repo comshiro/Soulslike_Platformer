@@ -2,8 +2,8 @@ extends Node2D
 
 
 const LIMIT_LEFT = -100
-const LIMIT_TOP = -1600
-const LIMIT_RIGHT = 12800
+const LIMIT_TOP = -1300
+const LIMIT_RIGHT = 8400
 const LIMIT_BOTTOM = 1900
 const ARENA_RESPAWN_FALL_MARGIN = 240.0
 const ARENA_LOCK_LEFT_X = 1590.0
