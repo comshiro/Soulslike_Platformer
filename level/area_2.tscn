@@ -1,0 +1,49 @@
+[gd_scene format=3 uid="uid://area2"]
+
+[ext_resource type="TileSet" uid="uid://tileset" path="res://level/tileset.tres" id="1"]
+[ext_resource type="PackedScene" uid="uid://platform" path="res://level/platforms/platform.tscn" id="2"]
+[ext_resource type="PackedScene" uid="uid://enemy" path="res://enemy/enemy.tscn" id="3"]
+[ext_resource type="Texture2D" uid="uid://sky" path="res://level/background/sky.webp" id="4"]
+[ext_resource type="Texture2D" uid="uid://cloud1" path="res://level/background/cloud_1.webp" id="5"]
+[ext_resource type="Texture2D" uid="uid://tree1" path="res://level/props/tree_1.webp" id="6"]
+
+[node name="Area2" type="Node2D" unique_id=1000]
+
+[node name="Sky" type="Sprite2D" parent="Area2" unique_id=1001]
+texture = ExtResource("4")
+position = Vector2(400, -120)
+z_index = -20
+scale = Vector2(1.0, 1.0)
+
+[node name="Cloud" type="Sprite2D" parent="Area2" unique_id=1002]
+texture = ExtResource("5")
+position = Vector2(220, -80)
+z_index = -18
+scale = Vector2(0.9, 0.9)
+
+[node name="TileMap" type="TileMap" parent="Area2" unique_id=1003]
+z_index = 0
+tile_set = ExtResource("1")
+format = 2
+
+[node name="Platform1" parent="Area2" instance=ExtResource("2") unique_id=1100]
+position = Vector2(160, 360)
+
+[node name="Platform2" parent="Area2" instance=ExtResource("2") unique_id=1101]
+position = Vector2(420, 300)
+
+[node name="Platform3" parent="Area2" instance=ExtResource("2") unique_id=1102]
+position = Vector2(680, 360)
+
+[node name="Tree1" type="Sprite2D" parent="Area2" unique_id=1200]
+texture = ExtResource("6")
+position = Vector2(720, 250)
+z_index = -5
+scale = Vector2(1.0, 1.0)
+
+[node name="Enemy1" parent="Area2" instance=ExtResource("3") unique_id=1300]
+position = Vector2(500, 320)
+
+[node name="PlayerSpawn" type="Position2D" parent="Area2" unique_id=1400]
+position = Vector2(100, 340)
+
