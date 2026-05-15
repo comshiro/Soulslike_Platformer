@@ -1,10 +1,13 @@
 extends Node2D
 
 
-const LIMIT_LEFT = -100
-const LIMIT_TOP = -1300
-const LIMIT_RIGHT = 8400
-const LIMIT_BOTTOM = 1900
+var LIMIT_LEFT := -100
+var LIMIT_TOP := -1300
+var LIMIT_RIGHT := 8400
+var LIMIT_BOTTOM := 1900
+const CAMERA_H_MARGIN := 48
+const CAMERA_V_MARGIN := 48
+const CAMERA_SKY_MARGIN := 300
 const ARENA_RESPAWN_FALL_MARGIN = 240.0
 const ARENA_LOCK_LEFT_X = 1590.0
 const ARENA_LOCK_RIGHT_X = 2530.0
@@ -30,6 +33,7 @@ var _checkpoint_toast_tween: Tween
 
 
 func _ready():
+	_update_camera_limits_from_tilemap()
 	for child in get_children():
 		if child is Player:
 			var camera = child.get_node("Camera")
@@ -161,3 +165,45 @@ func _clear_tile_patch_around(world_pos: Vector2, half_width: int, half_height: 
 	for y in range(center_cell.y - half_height, center_cell.y + half_height + 1):
 		for x in range(center_cell.x - half_width, center_cell.x + half_width + 1):
 			_tilemap.set_cell(0, Vector2i(x, y), -1)
+
+
+func _update_camera_limits_from_tilemap() -> void:
+	if not _tilemap:
+		return
+
+	var used_cells := _tilemap.get_used_cells(0)
+	if used_cells.empty():
+		return
+
+	var min_cell := used_cells[0]
+	var max_cell := used_cells[0]
+	for c in used_cells:
+		min_cell.x = min(min_cell.x, c.x)
+		min_cell.y = min(min_cell.y, c.y)
+		max_cell.x = max(max_cell.x, c.x)
+		max_cell.y = max(max_cell.y, c.y)
+
+	var cell_size := _tilemap.cell_size
+	var world_min := _tilemap.map_to_world(min_cell)
+	var world_max := _tilemap.map_to_world(max_cell) + cell_size
+
+	var left := int(floor(world_min.x)) - CAMERA_H_MARGIN
+	var right := int(ceil(world_max.x)) + CAMERA_H_MARGIN
+	var top := int(floor(world_min.y)) - CAMERA_SKY_MARGIN
+	var bottom := int(ceil(world_max.y)) + CAMERA_V_MARGIN
+
+	# Update the module-level limits so existing logic uses them.
+	LIMIT_LEFT = left
+	LIMIT_RIGHT = right
+	LIMIT_TOP = top
+	LIMIT_BOTTOM = bottom
+
+	# Also set any existing player cameras immediately.
+	for child in get_children():
+		if child is Player:
+			var camera := child.get_node_or_null("Camera") as Camera2D
+			if camera:
+				camera.limit_left = left
+				camera.limit_right = right
+				camera.limit_top = top
+				camera.limit_bottom = bottom
