@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://c7ai4bigaryci" path="res://gui/pause_menu_singleplayer.tscn" id="4_x6l06"]
 [ext_resource type="PackedScene" path="res://level/dash_shard.tscn" id="5"]
 [ext_resource type="PackedScene" path="res://level/sword_pickup.tscn" id="6"]
+[ext_resource type="PackedScene" path="res://enemy/charger.tscn" id="7_7ocom"]
 
 [node name="Game" type="Node" unique_id=1229093921]
 process_mode = 3
@@ -29,5 +30,8 @@ layer = 100
 [node name="PauseMenu" parent="InterfaceLayer" unique_id=1393834027 instance=ExtResource("4_x6l06")]
 offset_left = 9.0
 offset_right = 9.0
+
+[node name="Charger" parent="Level" unique_id=1371166842 instance=ExtResource("7_7ocom")]
+position = Vector2(620, 355)
 
 [connection signal="coin_collected" from="Level/Player" to="InterfaceLayer/PauseMenu" method="_on_coin_collected"]
